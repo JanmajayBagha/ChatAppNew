@@ -1,0 +1,174 @@
+.chat-layout {
+  display: flex;
+  height: 100vh;
+  font-family: "Poppins", sans-serif;
+  background: linear-gradient(135deg, #ffe6eb, #ffd6e0);
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background: #fff;
+  border-right: 1px solid #f1b6c1;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.sidebar h3 {
+  text-align: center;
+  color: #c9184a;
+  margin-bottom: 20px;
+}
+
+.user {
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: #fff0f5;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+.user:hover {
+  background: #ffe0ec;
+}
+
+.user.active {
+  background: #ffc1d6;
+}
+
+.user .name {
+  font-weight: 600;
+  color: #333;
+}
+
+.status {
+  font-size: 12px;
+  margin-top: 2px;
+}
+.status.on {
+  color: #28a745;
+}
+.status.off {
+  color: #888;
+}
+
+/* Conversation */
+.conversation {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.conv-header {
+  padding: 15px;
+  font-weight: bold;
+  text-align: center;
+  border-bottom: 1px solid #f1b6c1;
+  background: #fff;
+  color: #c9184a;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Message bubbles */
+.msg {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 15px;
+  font-size: 14px;
+  position: relative;
+}
+
+.msg.me {
+  align-self: flex-end;
+  background: #c9184a;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.msg.them {
+  align-self: flex-start;
+  background: #ffe0ec;
+  color: #333;
+  border-bottom-left-radius: 4px;
+}
+
+.msg .time {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.7;
+  text-align: right;
+}
+
+/* Composer */
+.composer {
+  display: flex;
+  border-top: 1px solid #f1b6c1;
+  background: #fff;
+  padding: 10px;
+  gap: 10px;
+}
+
+.composer input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 20px;
+  border: 1px solid #f1b6c1;
+  outline: none;
+  font-size: 14px;
+}
+
+.composer input:focus {
+  border-color: #c9184a;
+}
+
+.composer button {
+  background: #c9184a;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.composer button:hover {
+  background: #a0133d;
+}
+
+/* Empty state */
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 15px;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chat-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #f1b6c1;
+  }
+  .conversation {
+    flex: 1;
+  }
+}

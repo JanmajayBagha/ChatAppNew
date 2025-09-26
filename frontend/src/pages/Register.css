@@ -1,0 +1,101 @@
+/* Background */
+.register-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ffe6eb, #ffd6e0);
+  padding: 20px;
+  font-family: "Poppins", sans-serif;
+}
+
+/* Card */
+.register-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+/* Title */
+.register-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #d6336c;
+  margin-bottom: 8px;
+}
+
+.register-subtitle {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+/* Form */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Inputs */
+.register-input {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ffb6c1;
+  font-size: 14px;
+  outline: none;
+  transition: 0.3s;
+}
+
+.register-input:focus {
+  border-color: #d6336c;
+  box-shadow: 0 0 6px rgba(214, 51, 108, 0.3);
+}
+
+/* Button */
+.register-btn {
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: #d6336c;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.register-btn:hover {
+  background: #b52b59;
+}
+
+/* Footer */
+.register-footer {
+  margin-top: 20px;
+  font-size: 13px;
+  color: #666;
+}
+
+.login-link {
+  color: #d6336c;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .register-card {
+    padding: 20px;
+  }
+  .register-title {
+    font-size: 20px;
+  }
+}
