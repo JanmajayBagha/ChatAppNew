@@ -11,9 +11,13 @@ const User = require('./models/User');
 const Message = require('./models/Message');
 
 
-const allowedOrigin = 'https://chat-app-q9yep1xhk-janmajay-baghas-projects.vercel.app';
+const allowedOrigins = [
+  'https://chat-app-new-ecru.vercel.app',
+  'https://chat-app-q9yep1xhk-janmajay-baghas-projects.vercel.app',
+  'http://localhost:5173', // optional for local dev
+];
 app.use(cors({
-  origin: allowedOrigin,
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
