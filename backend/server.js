@@ -11,7 +11,7 @@ const User = require('./models/User');
 const Message = require('./models/Message');
 
 
-const allowedOrigin = 'https://chat-app-new-ecru.vercel.app';
+const allowedOrigin = 'https://chat-app-q9yep1xhk-janmajay-baghas-projects.vercel.app';
 app.use(cors({
   origin: allowedOrigin,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
