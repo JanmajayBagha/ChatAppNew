@@ -1,5 +1,5 @@
 import axios from 'axios';
-const API = axios.create({ baseURL: 'https://chatapp-k15o.onrender.com/api' });
+const API = axios.create({ baseURL: 'https://chatappnew-sqod.onrender.com/api' });
 
 export function setToken(token){
   if(token) API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
