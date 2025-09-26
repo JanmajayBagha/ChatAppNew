@@ -10,7 +10,13 @@ const cors = require('cors');
 const User = require('./models/User');
 const Message = require('./models/Message');
 
-app.use(cors());
+
+const allowedOrigin = 'https://chat-app-new-ecru.vercel.app';
+app.use(cors({
+  origin: allowedOrigin,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 app.use(express.json());
 
 // API routes
