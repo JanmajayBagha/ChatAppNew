@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound'; // create a simple 404 page
 import './index.css';
+import Logout from './pages/Logout';
 
 // PrivateRoute component
 function PrivateRoute({ children }) {
@@ -52,6 +53,8 @@ createRoot(document.getElementById('root')).render(
 
       {/* 404 Not Found */}
       <Route path="*" element={<NotFound />} />
+      <Route path="/logout" element={<Logout />} />
     </Routes>
   </BrowserRouter>
 );
+

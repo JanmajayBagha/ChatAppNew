@@ -76,11 +76,23 @@ export default function Chat() {
     setText("");
   };
 
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+  };
+
   return (
     <div className="chat-layout">
       {/* Sidebar */}
       <aside className="sidebar">
-        <h3>💌 Contacts</h3>
+        <div className="sidebar-header">
+          <h3>💌 Contacts</h3>
+          <button className="logout-btn" onClick={logout}>
+            🚪 Logout
+          </button>
+        </div>
+
         {users.map((u) => (
           <div
             key={u._id}
@@ -134,7 +146,9 @@ export default function Chat() {
             </footer>
           </>
         ) : (
-          <div className="empty">Select a contact to start your love chat 💕</div>
+          <div className="empty">
+            Select a contact to start your love chat 💕
+          </div>
         )}
       </section>
     </div>
