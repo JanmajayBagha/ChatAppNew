@@ -109,7 +109,7 @@ export default function Chat() {
       }
     }
 
-    setMessages((prev) => [...prev, message]); // optimistic update
+    // ✅ No optimistic update
     socket.emit("send:message", message);
 
     setText("");
@@ -130,7 +130,7 @@ export default function Chat() {
       localStorage.setItem("contacts", JSON.stringify(newContacts));
     }
     setSelected(user);
-    setSearchAll(""); // clear search after adding
+    setSearchAll("");
   };
 
   const removeContact = (user) => {
@@ -262,16 +262,16 @@ export default function Chat() {
 
                   {m.file && (
                     <>
-                      {m.fileType.startsWith("image") && (
+                      {m.fileType?.startsWith("image") && (
                         <img src={m.file} alt="sent" className="chat-image" />
                       )}
-                      {m.fileType.startsWith("video") && (
+                      {m.fileType?.startsWith("video") && (
                         <video controls className="chat-video">
                           <source src={m.file} type={m.fileType} />
                         </video>
                       )}
-                      {!m.fileType.startsWith("image") &&
-                        !m.fileType.startsWith("video") && (
+                      {!m.fileType?.startsWith("image") &&
+                        !m.fileType?.startsWith("video") && (
                           <a
                             href={m.file}
                             target="_blank"
@@ -308,7 +308,7 @@ export default function Chat() {
                 onChange={(e) => setFile(e.target.files[0])}
                 className="file-input"
               />
-              <button onClick={send}>❤️ Send</button>
+              <button onClick={send}>❤ Send</button>
             </footer>
           </>
         ) : (
