@@ -1,20 +1,33 @@
 import React, { useState } from "react";
 import API from "../api";
-import "./Login.css"; // Import the custom CSS
+import "./Login.css";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState(1); // Step 1: Request OTP, Step 2: Verify OTP
 
-  const submit = async (e) => {
+  // Request OTP
+  const requestOtp = async (e) => {
     e.preventDefault();
     try {
-      const res = await API.post("/auth/login", { email, password });
+      await API.post("/auth/request-otp", { phone });
+      setStep(2); // Move to OTP verification step
+    } catch (err) {
+      alert(err.response?.data?.msg || "Failed to request OTP");
+    }
+  };
+
+  // Verify OTP
+  const verifyOtp = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await API.post("/auth/verify-otp", { phone, code: otp });
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
       window.location.href = "/";
-    } catch (e) {
-      alert(e.response?.data?.msg || "Error");
+    } catch (err) {
+      alert(err.response?.data?.msg || "Invalid OTP");
     }
   };
 
@@ -23,29 +36,36 @@ export default function Login() {
       <div className="login-card">
         <h2 className="login-title">💞 Welcome Back</h2>
         <p className="login-subtitle">
-          Log in and continue your love journey together.
+          Log in with your phone number and continue your love journey together.
         </p>
 
-        <form onSubmit={submit} className="login-form">
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Your Email"
-            type="email"
-            className="login-input"
-          />
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            type="password"
-            className="login-input"
-          />
-
-          <button type="submit" className="login-btn">
-            Login ❤️
-          </button>
-        </form>
+        {step === 1 ? (
+          <form onSubmit={requestOtp} className="login-form">
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Your Phone Number"
+              type="tel"
+              className="login-input"
+            />
+            <button type="submit" className="login-btn">
+              Request OTP 📩
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={verifyOtp} className="login-form">
+            <input
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="Enter OTP"
+              type="number"
+              className="login-input"
+            />
+            <button type="submit" className="login-btn">
+              Verify OTP ✅
+            </button>
+          </form>
+        )}
 
         <p className="login-footer">
           Don’t have an account?{" "}

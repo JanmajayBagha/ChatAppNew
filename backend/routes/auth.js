@@ -1,40 +1,51 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+const OTP = require('../models/Otp');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = process.env;
 
-// Register
-router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
-  try {
-    if (await User.findOne({ email })) return res.status(400).json({ msg: 'Email exists' });
-    const hashed = await bcrypt.hash(password, 10);
-    const u = new User({ name, email, password: hashed });
-    await u.save();
-    const token = jwt.sign({ id: u._id, name: u.name }, JWT_SECRET);
-    res.json({ token, user: { id: u._id, name: u.name, email: u.email } });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+// generate JWT
+const generateToken = (user) =>
+  jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+
+// POST /auth/request-otp
+router.post('/request-otp', async (req, res) => {
+  const { phone } = req.body;
+  if (!phone) return res.status(400).json({ msg: "Phone number required" });
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+  await OTP.create({ phone, code, expiresAt });
+  console.log(`OTP for ${phone}: ${code}`); // Replace with SMS service in production
+
+  res.json({ msg: "OTP sent" });
 });
 
-// Login
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    const u = await User.findOne({ email });
-    if (!u) return res.status(400).json({ msg: 'Invalid creds' });
-    const ok = await bcrypt.compare(password, u.password);
-    if (!ok) return res.status(400).json({ msg: 'Invalid creds' });
-    const token = jwt.sign({ id: u._id, name: u.name }, JWT_SECRET);
-    res.json({ token, user: { id: u._id, name: u.name, email: u.email } });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+// POST /auth/verify-otp
+router.post('/verify-otp', async (req, res) => {
+  const { phone, code, name } = req.body;
+  if (!phone || !code) return res.status(400).json({ msg: "Phone and code required" });
+
+  const otp = await OTP.findOne({ phone, code });
+  if (!otp || otp.expiresAt < new Date()) return res.status(400).json({ msg: "Invalid or expired OTP" });
+
+  let user = await User.findOne({ phone });
+  if (!user) {
+    if (!name) return res.status(400).json({ msg: "Name required for registration" });
+    user = await User.create({ phone, name });
+  }
+
+  await OTP.deleteMany({ phone });
+  const token = generateToken(user);
+
+  res.json({ user, token });
 });
 
-// list users (no auth for starter)
+// GET /auth/users
 router.get('/users', async (req, res) => {
-  const all = await User.find().select('-password');
-  res.json(all);
+  const users = await User.find();
+  res.json(users);
 });
 
 module.exports = router;

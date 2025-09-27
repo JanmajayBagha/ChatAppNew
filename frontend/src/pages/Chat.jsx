@@ -8,45 +8,18 @@ export default function Chat() {
   const me = storedUser ? JSON.parse(storedUser) : null;
 
   const [contacts, setContacts] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
-  const [blockedUsers, setBlockedUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]); // for searching new users
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [file, setFile] = useState(null);
-  const [searchContacts, setSearchContacts] = useState("");
-  const [searchAll, setSearchAll] = useState("");
+  const [search, setSearch] = useState("");
   const bottomRef = useRef();
 
-  // Load all users
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await API.get("/auth/users");
-        if (res?.data) {
-          const others = res.data.filter((u) => u._id !== me?.id);
-          setAllUsers(others);
-        }
-      } catch (err) {
-        console.error("Failed to fetch users", err);
-      }
-    })();
-  }, [me]);
-
-  // Load contacts and blocked users from localStorage
-  useEffect(() => {
-    const savedContacts = JSON.parse(localStorage.getItem("contacts")) || [];
-    setContacts(savedContacts);
-
-    const blocked = JSON.parse(localStorage.getItem("blocked")) || [];
-    setBlockedUsers(blocked);
-  }, []);
-
-  // Socket setup
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) setToken(token);
-    if (me) socket.emit("user:online", me.id);
+    if (me) socket.emit("user:online", me._id);
 
     const handleReceive = (msg) => {
       if (msg.sender === selected?._id || msg.recipient === selected?._id) {
@@ -64,233 +37,157 @@ export default function Chat() {
     };
   }, [selected, me]);
 
-  // Auto scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Chat functions
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await API.get("/auth/users");
+        if (res?.data) {
+          const all = res.data.filter((u) => u._id !== me._id);
+          setAllUsers(all);
+          setContacts(all.filter((u) => me.contacts?.includes(u._id)));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, [me]);
+
   const openChat = async (u) => {
     setSelected(u);
     try {
-      const res = await API.get(`/messages/${u._id}`);
+      const res = await API.get(`/messages/${u._id}?me=${me._id}`);
       setMessages(res.data || []);
     } catch (err) {
-      console.error("Failed to load messages", err);
+      console.error(err);
       setMessages([]);
     }
   };
 
   const send = async () => {
-    if (!text.trim() && !file) return;
-    if (!selected || !me) return;
+    if ((!text && !file) || !selected) return;
 
-    let message = {
-      sender: me.id,
-      recipient: selected._id,
-      text: text || "",
-      createdAt: new Date().toISOString(),
-    };
-
-    // Upload file if selected
+    let fileData = null;
     if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const res = await API.post("/messages/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        message.file = res.data.fileUrl;
-        message.fileType = file.type;
-      } catch (err) {
-        console.error("File upload failed", err);
-        return;
-      }
+      const form = new FormData();
+      form.append("file", file);
+      const res = await API.post("/messages/upload", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      fileData = res.data.fileUrl;
     }
 
-    setMessages((prev) => [...prev, message]); // optimistic update
-    socket.emit("send:message", message);
-
+    const msg = {
+      sender: me._id,
+      recipient: selected._id,
+      text,
+      file: fileData,
+    };
+    setMessages((prev) => [...prev, msg]);
+    socket.emit("send:message", msg);
     setText("");
     setFile(null);
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/login";
-  };
-
-  // Contact management
-  const addContact = (user) => {
-    if (!contacts.find((c) => c._id === user._id)) {
-      const newContacts = [...contacts, user];
-      setContacts(newContacts);
-      localStorage.setItem("contacts", JSON.stringify(newContacts));
+  const addContact = async (userId) => {
+    try {
+      await API.post("/auth/add-contact", { userId, meId: me._id });
+      const updatedContacts = [...contacts, allUsers.find(u => u._id === userId)];
+      setContacts(updatedContacts);
+    } catch (err) {
+      console.error(err);
     }
-    setSelected(user);
-    setSearchAll(""); // clear search after adding
   };
 
-  const removeContact = (user) => {
-    const newContacts = contacts.filter((c) => c._id !== user._id);
-    setContacts(newContacts);
-    localStorage.setItem("contacts", JSON.stringify(newContacts));
-    if (selected?._id === user._id) setSelected(null);
-  };
-
-  const blockContact = (user) => {
-    if (!blockedUsers.find((b) => b._id === user._id)) {
-      const newBlocked = [...blockedUsers, user];
-      setBlockedUsers(newBlocked);
-      localStorage.setItem("blocked", JSON.stringify(newBlocked));
+  const blockUnblock = async (userId, block = true) => {
+    try {
+      await API.post("/auth/block-unblock", { userId, meId: me._id, block });
+      // update contacts list
+      setContacts((prev) => prev.filter(u => u._id !== userId));
+      if (selected?._id === userId) setSelected(null);
+    } catch (err) {
+      console.error(err);
     }
-    removeContact(user);
   };
 
-  const unblockContact = (user) => {
-    const newBlocked = blockedUsers.filter((b) => b._id !== user._id);
-    setBlockedUsers(newBlocked);
-    localStorage.setItem("blocked", JSON.stringify(newBlocked));
+  const deleteContact = async (userId) => {
+    try {
+      await API.post("/auth/delete-contact", { userId, meId: me._id });
+      setContacts((prev) => prev.filter(u => u._id !== userId));
+      if (selected?._id === userId) setSelected(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  const filteredContacts = contacts.filter(u =>
+    u.name.toLowerCase().includes(search.toLowerCase()) ||
+    u.phone.includes(search)
+  );
 
   return (
     <div className="chat-layout">
       {/* Sidebar */}
       <aside className="sidebar">
-        <div className="sidebar-header">
-          <h3>💌 Contacts</h3>
-          <button className="logout-btn" onClick={logout}>
-            🚪 Logout
-          </button>
-        </div>
-
-        {/* Contacts Section */}
-        <div className="sidebar-section">
-          <input
-            type="text"
-            placeholder="Search contacts..."
-            value={searchContacts}
-            onChange={(e) => setSearchContacts(e.target.value)}
-            className="contact-search"
-          />
-
-          {contacts
-            .filter((u) =>
-              u.name.toLowerCase().includes(searchContacts.toLowerCase())
-            )
-            .map((u) => (
-              <div
-                key={u._id}
-                className={`user ${selected?._id === u._id ? "active" : ""}`}
-              >
-                <div className="name" onClick={() => openChat(u)}>
-                  {u.name}
-                </div>
-                <div className="user-actions">
-                  <button onClick={() => removeContact(u)}>🗑 Remove</button>
-                  <button onClick={() => blockContact(u)}>🚫 Block</button>
-                </div>
-                <div className={`status ${u.online ? "on" : "off"}`}>
-                  {u.online ? "● Online" : "● Offline"}
-                </div>
+        <h3>💌 Contacts</h3>
+        <input
+          type="text"
+          placeholder="Search contacts..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="search-input"
+        />
+        {filteredContacts.map((u) => (
+          <div key={u._id} className={`user ${selected?._id === u._id ? "active" : ""}`}>
+            <div onClick={() => openChat(u)}>
+              <div className="name">{u.name}</div>
+              <div className={`status ${u.online ? "on" : "off"}`}>
+                {u.online ? "● Online" : "● Offline"}
               </div>
-            ))}
-
-          {contacts.filter((u) =>
-            u.name.toLowerCase().includes(searchContacts.toLowerCase())
-          ).length === 0 && <p className="empty-msg">No contacts found.</p>}
-        </div>
-
-        <hr />
-
-        {/* Blocked Users Section */}
-        {blockedUsers.length > 0 && (
-          <div className="sidebar-section">
-            <h4>⛔ Blocked Users</h4>
-            {blockedUsers.map((u) => (
-              <div key={u._id} className="user blocked">
-                <div className="name">{u.name}</div>
-                <button onClick={() => unblockContact(u)}>✅ Unblock</button>
-              </div>
-            ))}
+            </div>
+            <div className="actions">
+              <button onClick={() => deleteContact(u._id)}>🗑️</button>
+              <button onClick={() => blockUnblock(u._id)}>🚫</button>
+            </div>
           </div>
-        )}
+        ))}
 
-        <hr />
-
-        {/* Add New Users Section */}
-        <div className="sidebar-section">
-          <input
-            type="text"
-            placeholder="Find new users..."
-            value={searchAll}
-            onChange={(e) => setSearchAll(e.target.value)}
-            className="contact-search"
-          />
-          {searchAll.trim() !== "" &&
-            allUsers
-              .filter(
-                (u) =>
-                  !contacts.find((c) => c._id === u._id) &&
-                  !blockedUsers.find((b) => b._id === u._id) &&
-                  u.name.toLowerCase().includes(searchAll.toLowerCase())
-              )
-              .map((u) => (
-                <div key={u._id} className="user">
-                  <div className="name">{u.name}</div>
-                  <button onClick={() => addContact(u)}>➕ Add</button>
-                </div>
-              ))}
-        </div>
+        <h4>Add New Contact</h4>
+        {allUsers
+          .filter(u => !contacts.find(c => c._id === u._id))
+          .map(u => (
+            <div key={u._id} className="user">
+              <div className="name">{u.name}</div>
+              <button onClick={() => addContact(u._id)}>➕ Add</button>
+            </div>
+          ))}
       </aside>
 
       {/* Chat Window */}
       <section className="conversation">
         {selected ? (
           <>
-            <header className="conv-header">Chat with {selected.name} 💖</header>
+            <header className="conv-header">
+              Chat with {selected.name} 💖
+            </header>
 
             <div className="messages">
-              {messages.map((m) => (
-                <div
-                  key={m._id || `${m.sender}-${m.createdAt}`}
-                  className={`msg ${m.sender === me?.id ? "me" : "them"}`}
-                >
+              {messages.map((m, i) => (
+                <div key={m._id || i} className={`msg ${m.sender === me._id ? "me" : "them"}`}>
                   {m.text && <div className="txt">{m.text}</div>}
-
                   {m.file && (
-                    <>
-                      {m.fileType.startsWith("image") && (
-                        <img src={m.file} alt="sent" className="chat-image" />
+                    <div className="txt">
+                      {m.file.endsWith(".mp4") ? (
+                        <video controls src={m.file} />
+                      ) : (
+                        <a href={m.file} target="_blank" rel="noreferrer">📎 View File</a>
                       )}
-                      {m.fileType.startsWith("video") && (
-                        <video controls className="chat-video">
-                          <source src={m.file} type={m.fileType} />
-                        </video>
-                      )}
-                      {!m.fileType.startsWith("image") &&
-                        !m.fileType.startsWith("video") && (
-                          <a
-                            href={m.file}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            Download File
-                          </a>
-                        )}
-                    </>
+                    </div>
                   )}
-
-                  <div className="time">
-                    {m.createdAt
-                      ? new Date(m.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : ""}
-                  </div>
+                  <div className="time">{new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
                 </div>
               ))}
               <div ref={bottomRef} />
@@ -303,11 +200,7 @@ export default function Chat() {
                 onKeyDown={(e) => e.key === "Enter" && send()}
                 placeholder="Type a sweet message..."
               />
-              <input
-                type="file"
-                onChange={(e) => setFile(e.target.files[0])}
-                className="file-input"
-              />
+              <input type="file" onChange={e => setFile(e.target.files[0])} />
               <button onClick={send}>❤️ Send</button>
             </footer>
           </>
