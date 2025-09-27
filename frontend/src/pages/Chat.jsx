@@ -1,17 +1,18 @@
 import React, { useEffect, useState, useRef } from "react";
 import socket from "../socket";
 import API, { setToken } from "../api";
-import "./Chat.css"; // ❤️ Custom CSS
+import "./Chat.css";
 
 export default function Chat() {
-  // current user
   const storedUser = localStorage.getItem("user");
   const me = storedUser ? JSON.parse(storedUser) : null;
 
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+  const [search, setSearch] = useState(""); // For search input
   const bottomRef = useRef();
 
   useEffect(() => {
@@ -44,13 +45,24 @@ export default function Chat() {
       try {
         const res = await API.get("/auth/users");
         if (res?.data) {
-          setUsers(res.data.filter((u) => u._id !== me?.id));
+          const otherUsers = res.data.filter((u) => u._id !== me?.id);
+          setUsers(otherUsers);
+          setFilteredUsers(otherUsers); // initially show all
         }
       } catch (err) {
         console.error("Failed to fetch users", err);
       }
     })();
   }, [me]);
+
+  // Filter contacts as user types
+  useEffect(() => {
+    setFilteredUsers(
+      users.filter((u) =>
+        u.name.toLowerCase().includes(search.toLowerCase())
+      )
+    );
+  }, [search, users]);
 
   const openChat = async (u) => {
     setSelected(u);
@@ -71,7 +83,7 @@ export default function Chat() {
       text,
       createdAt: new Date().toISOString(),
     };
-    setMessages((prev) => [...prev, msg]); // optimistic
+    setMessages((prev) => [...prev, msg]);
     socket.emit("send:message", msg);
     setText("");
   };
@@ -93,7 +105,17 @@ export default function Chat() {
           </button>
         </div>
 
-        {users.map((u) => (
+        {/* Search Input */}
+        <input
+          type="text"
+          placeholder="Search contacts..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="contact-search"
+        />
+
+        {/* Contact List */}
+        {filteredUsers.map((u) => (
           <div
             key={u._id}
             className={`user ${selected?._id === u._id ? "active" : ""}`}
@@ -146,9 +168,7 @@ export default function Chat() {
             </footer>
           </>
         ) : (
-          <div className="empty">
-            Select a contact to start your love chat 💕
-          </div>
+          <div className="empty">Select a contact to start your love chat 💕</div>
         )}
       </section>
     </div>

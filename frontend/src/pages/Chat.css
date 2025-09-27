@@ -192,3 +192,11 @@
 .logout-btn:hover {
   background: #e63956;
 }
+.contact-search {
+  width: 100%;
+  padding: 6px 10px;
+  margin: 8px 0 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 0.9rem;
+}
