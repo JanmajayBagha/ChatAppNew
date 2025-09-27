@@ -13,6 +13,7 @@ export default function Chat() {
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+  const [file, setFile] = useState(null);
   const [searchContacts, setSearchContacts] = useState("");
   const [searchAll, setSearchAll] = useState("");
   const bottomRef = useRef();
@@ -80,17 +81,39 @@ export default function Chat() {
     }
   };
 
-  const send = () => {
-    if (!text.trim() || !selected || !me) return;
-    const msg = {
+  const send = async () => {
+    if (!text.trim() && !file) return;
+    if (!selected || !me) return;
+
+    let message = {
       sender: me.id,
       recipient: selected._id,
-      text,
+      text: text || "",
       createdAt: new Date().toISOString(),
     };
-    setMessages((prev) => [...prev, msg]);
-    socket.emit("send:message", msg);
+
+    // Upload file if selected
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await API.post("/messages/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        message.file = res.data.fileUrl;
+        message.fileType = file.type;
+      } catch (err) {
+        console.error("File upload failed", err);
+        return;
+      }
+    }
+
+    setMessages((prev) => [...prev, message]); // optimistic update
+    socket.emit("send:message", message);
+
     setText("");
+    setFile(null);
   };
 
   const logout = () => {
@@ -122,7 +145,7 @@ export default function Chat() {
       setBlockedUsers(newBlocked);
       localStorage.setItem("blocked", JSON.stringify(newBlocked));
     }
-    removeContact(user); // also remove from contacts
+    removeContact(user);
   };
 
   const unblockContact = (user) => {
@@ -152,10 +175,6 @@ export default function Chat() {
             className="contact-search"
           />
 
-          {contacts.filter((u) =>
-            u.name.toLowerCase().includes(searchContacts.toLowerCase())
-          ).length === 0 && <p className="empty-msg">No contacts found.</p>}
-
           {contacts
             .filter((u) =>
               u.name.toLowerCase().includes(searchContacts.toLowerCase())
@@ -177,6 +196,10 @@ export default function Chat() {
                 </div>
               </div>
             ))}
+
+          {contacts.filter((u) =>
+            u.name.toLowerCase().includes(searchContacts.toLowerCase())
+          ).length === 0 && <p className="empty-msg">No contacts found.</p>}
         </div>
 
         <hr />
@@ -186,7 +209,7 @@ export default function Chat() {
           <div className="sidebar-section">
             <h4>⛔ Blocked Users</h4>
             {blockedUsers.map((u) => (
-              <div key={u._id} className="user">
+              <div key={u._id} className="user blocked">
                 <div className="name">{u.name}</div>
                 <button onClick={() => unblockContact(u)}>✅ Unblock</button>
               </div>
@@ -194,48 +217,36 @@ export default function Chat() {
           </div>
         )}
 
-        {/* Add New Users Section (only visible when typing) */}
-        {searchAll.trim() && (
-          <div className="sidebar-section">
-            <h4>➕ Add New Users</h4>
-            {allUsers
-              .filter(
-                (u) =>
-                  !contacts.find((c) => c._id === u._id) &&
-                  !blockedUsers.find((b) => b._id === u._id) &&
-                  u.name.toLowerCase().includes(searchAll.toLowerCase())
-              )
-              .map((u) => (
-                <div key={u._id} className="user">
-                  <div className="name">{u.name}</div>
-                  <button onClick={() => addContact(u)}>➕ Add</button>
-                </div>
-              ))}
-            {allUsers.filter(
+        {/* Add New Users Section */}
+        <div className="sidebar-section">
+          <input
+            type="text"
+            placeholder="Find new users..."
+            value={searchAll}
+            onChange={(e) => setSearchAll(e.target.value)}
+            className="contact-search"
+          />
+          {allUsers
+            .filter(
               (u) =>
                 !contacts.find((c) => c._id === u._id) &&
                 !blockedUsers.find((b) => b._id === u._id) &&
                 u.name.toLowerCase().includes(searchAll.toLowerCase())
-            ).length === 0 && <p className="empty-msg">No users found.</p>}
-          </div>
-        )}
-
-        <input
-          type="text"
-          placeholder="Find new users..."
-          value={searchAll}
-          onChange={(e) => setSearchAll(e.target.value)}
-          className="contact-search"
-        />
+            )
+            .map((u) => (
+              <div key={u._id} className="user">
+                <div className="name">{u.name}</div>
+                <button onClick={() => addContact(u)}>➕ Add</button>
+              </div>
+            ))}
+        </div>
       </aside>
 
       {/* Chat Window */}
       <section className="conversation">
         {selected ? (
           <>
-            <header className="conv-header">
-              Chat with {selected.name} 💖
-            </header>
+            <header className="conv-header">Chat with {selected.name} 💖</header>
 
             <div className="messages">
               {messages.map((m) => (
@@ -243,7 +254,31 @@ export default function Chat() {
                   key={m._id || `${m.sender}-${m.createdAt}`}
                   className={`msg ${m.sender === me?.id ? "me" : "them"}`}
                 >
-                  <div className="txt">{m.text}</div>
+                  {m.text && <div className="txt">{m.text}</div>}
+
+                  {m.file && (
+                    <>
+                      {m.fileType.startsWith("image") && (
+                        <img src={m.file} alt="sent" className="chat-image" />
+                      )}
+                      {m.fileType.startsWith("video") && (
+                        <video controls className="chat-video">
+                          <source src={m.file} type={m.fileType} />
+                        </video>
+                      )}
+                      {!m.fileType.startsWith("image") &&
+                        !m.fileType.startsWith("video") && (
+                          <a
+                            href={m.file}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Download File
+                          </a>
+                        )}
+                    </>
+                  )}
+
                   <div className="time">
                     {m.createdAt
                       ? new Date(m.createdAt).toLocaleTimeString([], {
@@ -263,6 +298,11 @@ export default function Chat() {
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
                 placeholder="Type a sweet message..."
+              />
+              <input
+                type="file"
+                onChange={(e) => setFile(e.target.files[0])}
+                className="file-input"
               />
               <button onClick={send}>❤️ Send</button>
             </footer>

@@ -340,3 +340,257 @@ hr {
   border: none;
   border-top: 1px solid #ddd;
 }
+/* Chat Composer */
+.composer {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+  gap: 6px;
+}
+
+.composer input[type="text"] {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 0.95rem;
+}
+
+.composer input[type="text"]:focus {
+  border-color: #007bff;
+}
+
+/* File Input */
+.composer .file-input {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  font-size: 0.85rem;
+  background-color: #f0f0f0;
+  color: #333;
+  transition: background 0.2s;
+}
+
+.composer .file-input:hover {
+  background-color: #e0e0e0;
+}
+
+/* Send Button */
+.composer button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 20px;
+  background-color: #ff4d6d;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.composer button:hover {
+  background-color: #e43c5d;
+}
+
+/* Images and videos in chat */
+.chat-image {
+  max-width: 200px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+.chat-video {
+  max-width: 200px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+/* File download link */
+.messages a {
+  display: inline-block;
+  padding: 4px 8px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+
+.messages a:hover {
+  background-color: #0056b3;
+}
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  border-right: 1px solid #ddd;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #f9f9f9;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.sidebar-header h3 {
+  font-size: 1.1rem;
+  color: #ff4d6d;
+  font-weight: 600;
+}
+
+.logout-btn {
+  background-color: #ff4d6d;
+  color: white;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #e43c5d;
+}
+
+/* Search Inputs */
+.contact-search {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  font-size: 0.85rem;
+  outline: none;
+  margin-bottom: 6px;
+}
+
+.contact-search:focus {
+  border-color: #ff4d6d;
+}
+
+/* Contact User Row */
+.user {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.user:hover {
+  background-color: #f0f0f0;
+}
+
+.user.active {
+  background-color: #ffe6ed;
+}
+
+.user .name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.user .status {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #888;
+}
+
+/* Online/Offline status */
+.status.on {
+  color: #28a745;
+}
+
+.status.off {
+  color: #888;
+}
+
+/* User Actions: Remove / Block */
+.user-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.user-actions button {
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  transition: background 0.2s;
+}
+
+.user-actions button:first-child {
+  background-color: #f44336; /* Remove */
+}
+
+.user-actions button:first-child:hover {
+  background-color: #d32f2f;
+}
+
+.user-actions button:last-child {
+  background-color: #555; /* Block */
+}
+
+.user-actions button:last-child:hover {
+  background-color: #333;
+}
+
+/* Blocked Users */
+.user.blocked {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.user.blocked .name {
+  color: #721c24;
+}
+
+.user.blocked button {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  border: none;
+  background-color: #28a745;
+  color: white;
+  cursor: pointer;
+}
+
+.user.blocked button:hover {
+  background-color: #218838;
+}
+
+/* Sidebar Sections */
+.sidebar-section {
+  margin-bottom: 10px;
+}
+
+/* Empty messages in sidebar */
+.empty-msg {
+  font-size: 0.8rem;
+  color: #888;
+  padding: 4px 10px;
+}
+
+/* Separator */
+hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 8px 0;
+}
