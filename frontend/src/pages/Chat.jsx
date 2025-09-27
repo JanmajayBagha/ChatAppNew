@@ -7,13 +7,14 @@ export default function Chat() {
   const storedUser = localStorage.getItem("user");
   const me = storedUser ? JSON.parse(storedUser) : null;
 
-  const [contacts, setContacts] = useState([]);      // Users you added
-  const [allUsers, setAllUsers] = useState([]);      // All registered users
+  const [contacts, setContacts] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [blockedUsers, setBlockedUsers] = useState([]);
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
-  const [searchContacts, setSearchContacts] = useState("");  // Filter contacts
-  const [searchAll, setSearchAll] = useState("");            // Search new users
+  const [searchContacts, setSearchContacts] = useState("");
+  const [searchAll, setSearchAll] = useState("");
   const bottomRef = useRef();
 
   // Load all users
@@ -31,10 +32,13 @@ export default function Chat() {
     })();
   }, [me]);
 
-  // Load saved contacts
+  // Load contacts and blocked users from localStorage
   useEffect(() => {
     const savedContacts = JSON.parse(localStorage.getItem("contacts")) || [];
     setContacts(savedContacts);
+
+    const blocked = JSON.parse(localStorage.getItem("blocked")) || [];
+    setBlockedUsers(blocked);
   }, []);
 
   // Socket setup
@@ -64,6 +68,7 @@ export default function Chat() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Chat functions
   const openChat = async (u) => {
     setSelected(u);
     try {
@@ -94,6 +99,7 @@ export default function Chat() {
     window.location.href = "/login";
   };
 
+  // Contact management
   const addContact = (user) => {
     if (!contacts.find((c) => c._id === user._id)) {
       const newContacts = [...contacts, user];
@@ -101,6 +107,28 @@ export default function Chat() {
       localStorage.setItem("contacts", JSON.stringify(newContacts));
     }
     setSelected(user);
+  };
+
+  const removeContact = (user) => {
+    const newContacts = contacts.filter((c) => c._id !== user._id);
+    setContacts(newContacts);
+    localStorage.setItem("contacts", JSON.stringify(newContacts));
+    if (selected?._id === user._id) setSelected(null);
+  };
+
+  const blockContact = (user) => {
+    if (!blockedUsers.find((b) => b._id === user._id)) {
+      const newBlocked = [...blockedUsers, user];
+      setBlockedUsers(newBlocked);
+      localStorage.setItem("blocked", JSON.stringify(newBlocked));
+    }
+    removeContact(user); // also remove from contacts
+  };
+
+  const unblockContact = (user) => {
+    const newBlocked = blockedUsers.filter((b) => b._id !== user._id);
+    setBlockedUsers(newBlocked);
+    localStorage.setItem("blocked", JSON.stringify(newBlocked));
   };
 
   return (
@@ -136,9 +164,14 @@ export default function Chat() {
               <div
                 key={u._id}
                 className={`user ${selected?._id === u._id ? "active" : ""}`}
-                onClick={() => openChat(u)}
               >
-                <div className="name">{u.name}</div>
+                <div className="name" onClick={() => openChat(u)}>
+                  {u.name}
+                </div>
+                <div className="user-actions">
+                  <button onClick={() => removeContact(u)}>🗑 Remove</button>
+                  <button onClick={() => blockContact(u)}>🚫 Block</button>
+                </div>
                 <div className={`status ${u.online ? "on" : "off"}`}>
                   {u.online ? "● Online" : "● Offline"}
                 </div>
@@ -148,7 +181,20 @@ export default function Chat() {
 
         <hr />
 
-        {/* Add New Users Section (show only when typing) */}
+        {/* Blocked Users Section */}
+        {blockedUsers.length > 0 && (
+          <div className="sidebar-section">
+            <h4>⛔ Blocked Users</h4>
+            {blockedUsers.map((u) => (
+              <div key={u._id} className="user">
+                <div className="name">{u.name}</div>
+                <button onClick={() => unblockContact(u)}>✅ Unblock</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add New Users Section (only visible when typing) */}
         {searchAll.trim() && (
           <div className="sidebar-section">
             <h4>➕ Add New Users</h4>
@@ -156,6 +202,7 @@ export default function Chat() {
               .filter(
                 (u) =>
                   !contacts.find((c) => c._id === u._id) &&
+                  !blockedUsers.find((b) => b._id === u._id) &&
                   u.name.toLowerCase().includes(searchAll.toLowerCase())
               )
               .map((u) => (
@@ -167,12 +214,12 @@ export default function Chat() {
             {allUsers.filter(
               (u) =>
                 !contacts.find((c) => c._id === u._id) &&
+                !blockedUsers.find((b) => b._id === u._id) &&
                 u.name.toLowerCase().includes(searchAll.toLowerCase())
             ).length === 0 && <p className="empty-msg">No users found.</p>}
           </div>
         )}
 
-        {/* Search bar for Add New Users */}
         <input
           type="text"
           placeholder="Find new users..."

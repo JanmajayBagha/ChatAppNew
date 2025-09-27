@@ -263,3 +263,80 @@
   margin: 4px 0;
 }
 
+/* Blocked Users Section */
+.sidebar-section h4 {
+  margin: 6px 0;
+  font-size: 0.95rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.user.blocked {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: #f8d7da; /* subtle red background */
+  margin-bottom: 4px;
+}
+
+.user.blocked .name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #721c24;
+}
+
+.user.blocked button {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  border: none;
+  background-color: #28a745; /* green for unblock */
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.user.blocked button:hover {
+  background-color: #218838;
+}
+
+/* Reuse .user-actions for contacts */
+.user-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.user-actions button {
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  transition: background 0.2s;
+}
+
+.user-actions button:first-child {
+  background-color: #f44336; /* Remove */
+}
+
+.user-actions button:first-child:hover {
+  background-color: #d32f2f;
+}
+
+.user-actions button:last-child {
+  background-color: #555; /* Block */
+}
+
+.user-actions button:last-child:hover {
+  background-color: #333;
+}
+
+/* Optional: separate blocked users visually */
+hr {
+  margin: 10px 0;
+  border: none;
+  border-top: 1px solid #ddd;
+}
