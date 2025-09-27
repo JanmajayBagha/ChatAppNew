@@ -7,14 +7,37 @@ export default function Chat() {
   const storedUser = localStorage.getItem("user");
   const me = storedUser ? JSON.parse(storedUser) : null;
 
-  const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [contacts, setContacts] = useState([]);      // Users you added
+  const [allUsers, setAllUsers] = useState([]);      // All registered users
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
-  const [search, setSearch] = useState(""); // For search input
+  const [searchContacts, setSearchContacts] = useState("");  // Filter contacts
+  const [searchAll, setSearchAll] = useState("");            // Search new users
   const bottomRef = useRef();
 
+  // Load all users
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await API.get("/auth/users");
+        if (res?.data) {
+          const others = res.data.filter((u) => u._id !== me?.id);
+          setAllUsers(others);
+        }
+      } catch (err) {
+        console.error("Failed to fetch users", err);
+      }
+    })();
+  }, [me]);
+
+  // Load saved contacts
+  useEffect(() => {
+    const savedContacts = JSON.parse(localStorage.getItem("contacts")) || [];
+    setContacts(savedContacts);
+  }, []);
+
+  // Socket setup
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) setToken(token);
@@ -36,33 +59,10 @@ export default function Chat() {
     };
   }, [selected, me]);
 
+  // Auto scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await API.get("/auth/users");
-        if (res?.data) {
-          const otherUsers = res.data.filter((u) => u._id !== me?.id);
-          setUsers(otherUsers);
-          setFilteredUsers(otherUsers); // initially show all
-        }
-      } catch (err) {
-        console.error("Failed to fetch users", err);
-      }
-    })();
-  }, [me]);
-
-  // Filter contacts as user types
-  useEffect(() => {
-    setFilteredUsers(
-      users.filter((u) =>
-        u.name.toLowerCase().includes(search.toLowerCase())
-      )
-    );
-  }, [search, users]);
 
   const openChat = async (u) => {
     setSelected(u);
@@ -94,6 +94,15 @@ export default function Chat() {
     window.location.href = "/login";
   };
 
+  const addContact = (user) => {
+    if (!contacts.find((c) => c._id === user._id)) {
+      const newContacts = [...contacts, user];
+      setContacts(newContacts);
+      localStorage.setItem("contacts", JSON.stringify(newContacts));
+    }
+    setSelected(user);
+  };
+
   return (
     <div className="chat-layout">
       {/* Sidebar */}
@@ -105,28 +114,72 @@ export default function Chat() {
           </button>
         </div>
 
-        {/* Search Input */}
+        {/* Contacts Section */}
+        <div className="sidebar-section">
+          <input
+            type="text"
+            placeholder="Search contacts..."
+            value={searchContacts}
+            onChange={(e) => setSearchContacts(e.target.value)}
+            className="contact-search"
+          />
+
+          {contacts.filter((u) =>
+            u.name.toLowerCase().includes(searchContacts.toLowerCase())
+          ).length === 0 && <p className="empty-msg">No contacts found.</p>}
+
+          {contacts
+            .filter((u) =>
+              u.name.toLowerCase().includes(searchContacts.toLowerCase())
+            )
+            .map((u) => (
+              <div
+                key={u._id}
+                className={`user ${selected?._id === u._id ? "active" : ""}`}
+                onClick={() => openChat(u)}
+              >
+                <div className="name">{u.name}</div>
+                <div className={`status ${u.online ? "on" : "off"}`}>
+                  {u.online ? "● Online" : "● Offline"}
+                </div>
+              </div>
+            ))}
+        </div>
+
+        <hr />
+
+        {/* Add New Users Section (show only when typing) */}
+        {searchAll.trim() && (
+          <div className="sidebar-section">
+            <h4>➕ Add New Users</h4>
+            {allUsers
+              .filter(
+                (u) =>
+                  !contacts.find((c) => c._id === u._id) &&
+                  u.name.toLowerCase().includes(searchAll.toLowerCase())
+              )
+              .map((u) => (
+                <div key={u._id} className="user">
+                  <div className="name">{u.name}</div>
+                  <button onClick={() => addContact(u)}>➕ Add</button>
+                </div>
+              ))}
+            {allUsers.filter(
+              (u) =>
+                !contacts.find((c) => c._id === u._id) &&
+                u.name.toLowerCase().includes(searchAll.toLowerCase())
+            ).length === 0 && <p className="empty-msg">No users found.</p>}
+          </div>
+        )}
+
+        {/* Search bar for Add New Users */}
         <input
           type="text"
-          placeholder="Search contacts..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Find new users..."
+          value={searchAll}
+          onChange={(e) => setSearchAll(e.target.value)}
           className="contact-search"
         />
-
-        {/* Contact List */}
-        {filteredUsers.map((u) => (
-          <div
-            key={u._id}
-            className={`user ${selected?._id === u._id ? "active" : ""}`}
-            onClick={() => openChat(u)}
-          >
-            <div className="name">{u.name}</div>
-            <div className={`status ${u.online ? "on" : "off"}`}>
-              {u.online ? "● Online" : "● Offline"}
-            </div>
-          </div>
-        ))}
       </aside>
 
       {/* Chat Window */}

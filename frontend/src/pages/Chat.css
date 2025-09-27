@@ -200,3 +200,66 @@
   border: 1px solid #ddd;
   font-size: 0.9rem;
 }
+.contact-search {
+  width: 100%;
+  padding: 6px 10px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 0.9rem;
+}
+
+.user button {
+  margin-left: 6px;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  border: none;
+  background: #4caf50;
+  color: white;
+  cursor: pointer;
+}
+
+.user button:hover {
+  background: #43a047;
+}
+.sidebar-section {
+  margin-bottom: 15px;
+}
+
+.sidebar-section h4 {
+  margin: 8px 0;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.contact-search {
+  width: 100%;
+  padding: 6px 10px;
+  margin: 6px 0 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 0.9rem;
+}
+
+.user button {
+  margin-left: 6px;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  border: none;
+  background: #4caf50;
+  color: white;
+  cursor: pointer;
+}
+
+.user button:hover {
+  background: #43a047;
+}
+
+.empty-msg {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 4px 0;
+}
+
