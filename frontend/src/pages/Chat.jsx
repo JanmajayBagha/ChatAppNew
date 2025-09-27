@@ -130,6 +130,7 @@ export default function Chat() {
       localStorage.setItem("contacts", JSON.stringify(newContacts));
     }
     setSelected(user);
+    setSearchAll(""); // clear search after adding
   };
 
   const removeContact = (user) => {
@@ -217,6 +218,8 @@ export default function Chat() {
           </div>
         )}
 
+        <hr />
+
         {/* Add New Users Section */}
         <div className="sidebar-section">
           <input
@@ -226,19 +229,20 @@ export default function Chat() {
             onChange={(e) => setSearchAll(e.target.value)}
             className="contact-search"
           />
-          {allUsers
-            .filter(
-              (u) =>
-                !contacts.find((c) => c._id === u._id) &&
-                !blockedUsers.find((b) => b._id === u._id) &&
-                u.name.toLowerCase().includes(searchAll.toLowerCase())
-            )
-            .map((u) => (
-              <div key={u._id} className="user">
-                <div className="name">{u.name}</div>
-                <button onClick={() => addContact(u)}>➕ Add</button>
-              </div>
-            ))}
+          {searchAll.trim() !== "" &&
+            allUsers
+              .filter(
+                (u) =>
+                  !contacts.find((c) => c._id === u._id) &&
+                  !blockedUsers.find((b) => b._id === u._id) &&
+                  u.name.toLowerCase().includes(searchAll.toLowerCase())
+              )
+              .map((u) => (
+                <div key={u._id} className="user">
+                  <div className="name">{u.name}</div>
+                  <button onClick={() => addContact(u)}>➕ Add</button>
+                </div>
+              ))}
         </div>
       </aside>
 
